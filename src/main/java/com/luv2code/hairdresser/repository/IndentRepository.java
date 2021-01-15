@@ -1,9 +1,12 @@
 package com.luv2code.hairdresser.repository;
 
-import com.luv2code.hairdresser.domain.Service;
+import com.luv2code.hairdresser.domain.Indent;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 @Repository
-public interface ServiceRepository extends JpaRepository<Service, Long> {
+public interface IndentRepository extends JpaRepository<Indent, Long> {
+
+//    List<Indent> findAllByUserUsername();
+
 }

@@ -1,5 +1,8 @@
 package com.luv2code.hairdresser.domain;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
+import com.luv2code.hairdresser.domain.base.BaseEntity;
 import lombok.*;
 
 import javax.persistence.*;
@@ -13,7 +16,6 @@ import java.util.List;
 @NoArgsConstructor
 @Setter
 @Table(name = "USER")
-@ToString
 public class User extends BaseEntity {
 
     @Column(name = "first_name")
@@ -40,11 +42,16 @@ public class User extends BaseEntity {
     @Column(name = "is_active")
     private Boolean isActive;
 
+    @Column(name = "has_reserved_indent")
+    private Boolean hasReservedIndent;
+
+    @JsonManagedReference
     @ManyToOne
     @JoinColumn(name = "role_id", nullable = false)
     private Role role;
 
+    @JsonBackReference
     @OneToMany(mappedBy = "user")
-    private List<Order> orders;
+    private List<Indent> indents;
 
 }
