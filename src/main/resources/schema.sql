@@ -1,18 +1,18 @@
 drop table if exists "ROLE" cascade ;
 drop table if exists "USER" cascade;
-drop table if exists "SERVICE" cascade;
-drop table if exists "ORDERS" cascade;
-drop table if exists "ORDER_SERVICE" cascade;
+drop table if exists "ACCOMMODATION" cascade;
+drop table if exists "INDENT" cascade;
+drop table if exists "INDENT_ACCOMMODATION" cascade;
 
 create table "ROLE" (
-    id int not null,
+    id bigserial not null,
     name varchar(10) not null,
     description varchar(100),
     primary key (id)
 );
 
 create table "USER" (
-    id int not null,
+    id bigserial not null,
     first_name varchar(100) not null,
     last_name varchar(100) not null,
     username varchar(20) not null,
@@ -21,35 +21,36 @@ create table "USER" (
     phone_number varchar(13) not null,
     number_of_reservations int,
     is_active boolean,
+    has_reserved_indent boolean,
     role_id int not null,
     primary key (id),
     constraint role_fk foreign key (role_id) references "ROLE" (id)
 );
 
-create table "SERVICE" (
-    id int not null,
+create table "ACCOMMODATION" (
+    id bigserial not null,
     name varchar(100) not null,
     description varchar(200) not null,
-    price decimal(5, 2) not null,
+    price int not null,
     duration int not null,
     primary key (id)
 );
 
-create table "ORDERS" (
-    id int not null,
+create table "INDENT" (
+    id bigserial not null,
     reservation_date date not null,
-    reservation_time time not null,
-    canceled_reservation_date date,
-    canceled_reservation_time time,
+    reservation_time_from time not null,
+    reservation_time_to time not null,
+    is_active boolean,
     user_id int not null,
     primary key (id),
     constraint user_fk foreign key (user_id) references "USER" (id)
 );
 
-create table "ORDER_SERVICE" (
-    order_id int not null,
-    service_id int not null,
-    primary key (order_id, service_id),
-    constraint order_fk foreign key (order_id) references "ORDERS" (id),
-    constraint service_fk foreign key (service_id) references "SERVICE" (id)
+create table "INDENT_ACCOMMODATION" (
+    indent_id int not null,
+    accommodation_id int not null,
+    primary key (indent_id, accommodation_id),
+    constraint indent_fk foreign key (indent_id) references "INDENT" (id),
+    constraint accommodation_fk foreign key (accommodation_id) references "ACCOMMODATION" (id)
 );

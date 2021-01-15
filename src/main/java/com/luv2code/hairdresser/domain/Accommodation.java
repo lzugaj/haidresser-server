@@ -1,5 +1,7 @@
 package com.luv2code.hairdresser.domain;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.luv2code.hairdresser.domain.base.BaseEntity;
 import lombok.*;
 
 import javax.persistence.*;
@@ -12,9 +14,8 @@ import java.util.List;
 @EqualsAndHashCode(callSuper = true)
 @NoArgsConstructor
 @Setter
-@Table(name = "SERVICE")
-@ToString
-public class Service extends BaseEntity {
+@Table(name = "ACCOMMODATION")
+public class Accommodation extends BaseEntity {
 
     @Column(name = "name")
     private String name;
@@ -23,20 +24,21 @@ public class Service extends BaseEntity {
     private String description;
 
     @Column(name = "price")
-    private Double price;
+    private Integer price;
 
     @Column(name = "duration")
     private Integer duration;
 
+    @JsonBackReference
     @ManyToMany
     @JoinTable(
-            name = "ORDER_SERVICE",
+            name = "INDENT_ACCOMMODATION",
             joinColumns = {
-                    @JoinColumn(name = "service_id")
+                    @JoinColumn(name = "accommodation_id")
             },
             inverseJoinColumns = {
-                    @JoinColumn(name = "order_id")
+                    @JoinColumn(name = "indent_id")
             })
-    private List<Order> orders;
+    private List<Indent> indents;
 
 }

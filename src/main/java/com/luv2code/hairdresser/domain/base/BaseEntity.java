@@ -1,4 +1,4 @@
-package com.luv2code.hairdresser.domain;
+package com.luv2code.hairdresser.domain.base;
 
 import lombok.Data;
 
