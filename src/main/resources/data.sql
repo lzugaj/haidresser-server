@@ -2,7 +2,14 @@ insert into "ROLE" values (1, 'USER', 'The user manager can perform CRUD operati
 insert into "ROLE" values (2, 'EMPLOYER', 'The role employer can perform specific CRUD operations on application users and indents.');
 insert into "ROLE" values (3, 'MANAGER', 'The role manager can perform CRUD operations on all application users and indents.');
 
-insert into "USER" values (1, 'Luka', 'Žugaj', 'lzugaj', 'password', 'luka.zugaj@gmail.com', '+385916017879', 0, true, false, 3);
+insert into "USER" values (1, 'Luka', 'Žugaj', 'lzugaj', 'password', 'luka.zugaj@gmail.com', '+385916017879', 0, 'ACTIVE', false);
+
+insert into "USER_ROLE" values (1, 1);
+
+insert into "EMPLOYER" values (1, 'Iva', 'Frizerka', 'ifrizerka', 'sefica', 'iva.frizerka@gmail.com', '+385982345678');
+
+insert into "EMPLOYER_ROLE" values (1, 2);
+insert into "EMPLOYER_ROLE" values (1, 3);
 
 insert into "ACCOMMODATION" values (1, 'Šišanje', 'Šišanje sa škarama i/ili mašinicom', 30, 20);
 insert into "ACCOMMODATION" values (2, 'Uređivanje brade', 'Uređivanje brade sa škarama, mašinicom, žiletom', 20, 15);

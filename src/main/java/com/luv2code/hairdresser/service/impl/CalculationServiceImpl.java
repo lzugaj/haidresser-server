@@ -3,10 +3,8 @@ package com.luv2code.hairdresser.service.impl;
 import com.luv2code.hairdresser.domain.Accommodation;
 import com.luv2code.hairdresser.domain.Indent;
 import com.luv2code.hairdresser.service.CalculationService;
-import com.luv2code.hairdresser.service.ParseService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.sql.Date;
@@ -18,17 +16,11 @@ public class CalculationServiceImpl implements CalculationService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(CalculationServiceImpl.class);
 
-    private final ParseService parseService;
-
-    @Autowired
-    public CalculationServiceImpl(final ParseService parseService) {
-        this.parseService = parseService;
-    }
-
     @Override
     public Time calculateReservationTimeTo(final Indent chosenIndent) {
         Integer timeRequiredToPerformChosenAccommodations = 0;
         for (Accommodation accommodation : chosenIndent.getAccommodations()) {
+            LOGGER.info("Currently iterated Accommodation is: ´{}´ - ´{}´ min.", accommodation.getName(), accommodation.getDuration());
             timeRequiredToPerformChosenAccommodations += accommodation.getDuration();
         }
 
@@ -36,8 +28,7 @@ public class CalculationServiceImpl implements CalculationService {
 
         final Calendar calendar = addMinutesToCalendar(chosenIndent, timeRequiredToPerformChosenAccommodations);
         LOGGER.info("Calculated calendar day for reservation is: ´{}´.", calendar);
-
-        return parseService.parseToTime(String.valueOf(calendar.getTime()));
+        return Time.valueOf(String.valueOf(calendar.getTime()).substring(11, 19));
     }
 
     private Calendar addMinutesToCalendar(final Indent chosenIndent, final Integer timeRequiredToPerformChosenAccommodations) {
@@ -49,9 +40,8 @@ public class CalculationServiceImpl implements CalculationService {
 
     @Override
     public Boolean calculateIsReservationDateEqualsChosenDate(final Indent currentIteratedIndent, final Date chosenDate) {
-        final Date currentIteratedIndentDate = parseService.parseToDate(String.valueOf(currentIteratedIndent.getReservationDate()));
+        final Date currentIteratedIndentDate = Date.valueOf(currentIteratedIndent.getReservationDate());
         LOGGER.info("Current iterated Indent date is: ´{}´.", currentIteratedIndentDate);
-
-        return parseService.parseToString(currentIteratedIndentDate).equals(parseService.parseToString(chosenDate));
+        return currentIteratedIndentDate.compareTo(chosenDate) == 0;
     }
 }

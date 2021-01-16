@@ -46,12 +46,12 @@ public class IndentController {
         return new ResponseEntity<>(indents, HttpStatus.OK);
     }
 
-    @GetMapping("/user/{username}")
-    public ResponseEntity<List<?>> findAllForUser(@PathVariable final String username) {
-        final List<Indent> indents = indentService.findAllForUser(username);
-        LOGGER.info("Successfully founded all Indents for User with username: ´{}´.", username);
-        return new ResponseEntity<>(indents, HttpStatus.OK);
-    }
+//    @GetMapping("/user/{username}")
+//    public ResponseEntity<List<?>> findAllForUser(@PathVariable final String username) {
+//        final List<Indent> indents = indentService.findAllForUser(username);
+//        LOGGER.info("Successfully founded all Indents for User with username: ´{}´.", username);
+//        return new ResponseEntity<>(indents, HttpStatus.OK);
+//    }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<?> delete(@PathVariable final Long id) {

@@ -2,6 +2,7 @@ package com.luv2code.hairdresser.domain;
 
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.luv2code.hairdresser.domain.base.BaseEntity;
+import com.luv2code.hairdresser.domain.enums.IndentType;
 import lombok.*;
 
 import javax.persistence.*;
@@ -29,10 +30,11 @@ public class Indent extends BaseEntity {
     private LocalTime reservationTimeTo;
 
     @Column(name = "is_active")
-    private Boolean isActive;
+    @Enumerated(EnumType.STRING)
+    private IndentType status;
 
-    @JsonManagedReference
     @ManyToOne
+    @JsonManagedReference
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 

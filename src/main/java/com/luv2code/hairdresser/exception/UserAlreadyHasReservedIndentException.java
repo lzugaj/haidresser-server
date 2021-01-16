@@ -18,7 +18,7 @@ public class UserAlreadyHasReservedIndentException extends AbstractEntityExcepti
     }
 
     private static String createMessage(final String entityName, final String fieldName, final String fieldValue) {
-        return String.format("Entity '%s' with '%s' value '%s' already has an reserved indent.",
+        return String.format("Entity '%s' with '%s' value '%s' already has a reserved indent.",
                 entityName, fieldName, fieldValue);
     }
 }

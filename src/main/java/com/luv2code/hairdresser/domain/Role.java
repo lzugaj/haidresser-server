@@ -6,6 +6,7 @@ import com.luv2code.hairdresser.domain.enums.RoleType;
 import lombok.*;
 
 import javax.persistence.*;
+import java.io.Serializable;
 import java.util.List;
 
 @AllArgsConstructor
@@ -16,7 +17,7 @@ import java.util.List;
 @NoArgsConstructor
 @Setter
 @Table(name = "ROLE")
-public class Role extends BaseEntity {
+public class Role extends BaseEntity implements Serializable {
 
     @Column(name = "name")
     @Enumerated(EnumType.STRING)
@@ -25,8 +26,22 @@ public class Role extends BaseEntity {
     @Column(name = "description")
     private String description;
 
+    @ManyToMany
+    @ToString.Exclude
     @JsonBackReference
-    @OneToMany(mappedBy = "role")
+    @JoinTable(
+            name = "user_role",
+            joinColumns = @JoinColumn(name = "user_id"),
+            inverseJoinColumns = @JoinColumn(name = "role_id"))
     private List<User> users;
+
+    @ManyToMany
+    @ToString.Exclude
+    @JsonBackReference
+    @JoinTable(
+            name = "employer_role",
+            joinColumns = @JoinColumn(name = "employer_id"),
+            inverseJoinColumns = @JoinColumn(name = "role_id"))
+    private List<Employer> employers;
 
 }

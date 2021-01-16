@@ -1,10 +1,9 @@
 package com.luv2code.hairdresser.service.impl;
 
-import com.luv2code.hairdresser.domain.Accommodation;
 import com.luv2code.hairdresser.domain.Indent;
 import com.luv2code.hairdresser.domain.User;
 import com.luv2code.hairdresser.exception.EntityNotFoundException;
-import com.luv2code.hairdresser.exception.IndentNotActiveException;
+import com.luv2code.hairdresser.exception.IndentStatusNotReservedException;
 import com.luv2code.hairdresser.exception.UserAlreadyHasReservedIndentException;
 import com.luv2code.hairdresser.repository.IndentRepository;
 import com.luv2code.hairdresser.service.CalculationService;
@@ -15,10 +14,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.sql.Date;
+import java.time.LocalTime;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
+
+import static com.luv2code.hairdresser.domain.enums.IndentType.RESERVED;
 
 @Service
 public class IndentServiceImpl implements IndentService {
@@ -36,9 +38,10 @@ public class IndentServiceImpl implements IndentService {
         this.calculationService = calculationService;
     }
 
-    // TODO: @lzugaj - When service finished should set setHasReservedIndent and setIsActive to false (Scheduler)
+    // TODO: @lzugaj - Scheduler for setting User hasReservedIndent variable to false.
+    // TODO: @lzugaj - Scheduler for changing Indent status to IN_PROGRESS and FINISHED when Indent is currently in progress and then finished.
+    // TODO: @lzugaj - Push notification for save, update and delete methods on User email.
 
-    // TODO: @lzugaj - Push notification
     @Override
     public Indent save(final User user, final Indent indent) {
         if (!user.getHasReservedIndent()) {
@@ -49,15 +52,15 @@ public class IndentServiceImpl implements IndentService {
             LOGGER.info("Creating Indent with id: ´{}´.", indent.getId());
             return newIndent;
         } else {
-            LOGGER.error("User, ´{}´, already has a reserved indent.", user.getUsername());
-            throw new UserAlreadyHasReservedIndentException("User", "hasReservedIndent", String.valueOf(user.getHasReservedIndent()));
+            LOGGER.error("Cannot have more than one indent at same time for User with id: ´{}´.", user.getId());
+            throw new UserAlreadyHasReservedIndentException("User", "id", String.valueOf(user.getId()));
         }
     }
 
     private void setupVariablesCreate(final User user, final Indent indent) {
         LOGGER.info("Setting up Indent parameters for Use with id: ´{}´.", user.getId());
-        indent.setReservationTimeTo(calculationService.calculateReservationTimeTo(indent).toLocalTime());
-        indent.setIsActive(true);
+        indent.setReservationTimeTo(calculateReservationTimeTo(indent));
+        indent.setStatus(RESERVED);
         indent.setUser(user);
 
         LOGGER.info("Setting up parameters for User with id: ´{}´.", user.getId());
@@ -86,6 +89,17 @@ public class IndentServiceImpl implements IndentService {
     }
 
     @Override
+    public List<Indent> findAllForUser(final User user) {
+        final List<Indent> indents = findAll();
+        LOGGER.info("Successfully founded all Indents.");
+
+        LOGGER.info("Searching all Indents for User with id: ´{}´", user.getId());
+        return indents.stream()
+                .filter(order -> order.getUser().getUsername().equals(user.getUsername()))
+                .collect(Collectors.toList());
+    }
+
+    @Override
     public List<Indent> findAllForChosenDate(final Date chosenDate) {
         final List<Indent> indents = findAll();
         LOGGER.info("Searching all Indents for chosen date: ´{}´.", chosenDate);
@@ -95,28 +109,17 @@ public class IndentServiceImpl implements IndentService {
     }
 
     @Override
-    public List<Indent> findAllForUser(final String username) {
-        final List<Indent> indents = findAll();
-        LOGGER.info("Searching all Indents for User with username: ´{}´", username);
-        return indents.stream()
-                .filter(order -> order.getUser().getUsername().equals(username))
-                .collect(Collectors.toList());
-    }
-
-    // TODO: @lzugaj - Push notification
-    @Override
-    public Indent update(final Indent oldIndent, final Indent newIndent, final List<Accommodation> accommodations) {
-        if (oldIndent.getIsActive()) {
+    public Indent update(final Indent oldIndent, final Indent newIndent) {
+        if (oldIndent.getStatus().equals(RESERVED)) {
             setupVariablesUpdate(oldIndent, newIndent);
-            LOGGER.info("Successfully setup variables for updating an Indent.");
+            LOGGER.info("Successfully setup variables for deleting an Indent with id: ´{}´.", oldIndent.getId());
 
             indentRepository.save(oldIndent);
             LOGGER.info("Updating Indent with id: ´{}´", oldIndent.getId());
-
             return oldIndent;
         } else {
-            LOGGER.error("Indent with id ´{}´ cannot be deleted because it is inactive.", oldIndent.getId());
-            throw new IndentNotActiveException("Indent", "id", String.valueOf(oldIndent.getId()));
+            LOGGER.error("Cannot perform update action for inactive Indent with id: ´{}´.", oldIndent.getId());
+            throw new IndentStatusNotReservedException("Indent", "id", String.valueOf(oldIndent.getId()));
         }
     }
 
@@ -124,25 +127,32 @@ public class IndentServiceImpl implements IndentService {
         LOGGER.info("Setting up parameters for Indent  with id: ´{}´.", oldIndent.getId());
         oldIndent.setReservationDate(newIndent.getReservationDate());
         oldIndent.setReservationTimeFrom(newIndent.getReservationTimeFrom());
-        oldIndent.setReservationTimeTo(calculationService.calculateReservationTimeTo(newIndent).toLocalTime());
+        oldIndent.setReservationTimeTo(calculateReservationTimeTo(newIndent));
+        oldIndent.setAccommodations(newIndent.getAccommodations());
     }
 
-    // TODO: @lzugaj - Push notification
+    private LocalTime calculateReservationTimeTo(final Indent indent) {
+        final LocalTime calculatedReservationTimeTo = calculationService.calculateReservationTimeTo(indent).toLocalTime();
+        LOGGER.info("Successfully calculated reservation time to is: ´{}´.", calculatedReservationTimeTo);
+
+        return calculatedReservationTimeTo;
+    }
+
     @Override
     public void delete(final User user, final Indent indent) {
-        if (indent.getIsActive()) {
-            setupVariablesDelete(user, indent);
-            LOGGER.info("Successfully setup variables for deleting an Indent.");
+        if (indent.getStatus().equals(RESERVED)) {
+            setupVariablesDelete(user);
+            LOGGER.info("Successfully setup variables for deleting an Indent for User with id: ´{}´.", user.getId());
 
             indentRepository.delete(indent);
             LOGGER.info("Deleting Indent with id: ´{}´", indent.getId());
         } else {
-            LOGGER.error("Indent with id ´{}´ cannot be deleted because it is inactive.", indent.getId());
-            throw new IndentNotActiveException("Indent", "id", String.valueOf(indent.getId()));
+            LOGGER.error("Cannot perform delete action for inactive Indent with id: ´{}´.", indent.getId());
+            throw new IndentStatusNotReservedException("Indent", "id", String.valueOf(indent.getId()));
         }
     }
 
-    private void setupVariablesDelete(final User user, final Indent indent) {
+    private void setupVariablesDelete(final User user) {
         LOGGER.info("Setting up parameters for User with username: ´{}´.", user.getUsername());
         user.setHasReservedIndent(false);
         user.setNumberOfReservations(user.getNumberOfReservations() - 1);

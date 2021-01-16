@@ -5,11 +5,10 @@ import com.luv2code.hairdresser.domain.Indent;
 import com.luv2code.hairdresser.domain.Role;
 import com.luv2code.hairdresser.domain.User;
 import com.luv2code.hairdresser.exception.EntityNotFoundException;
-import com.luv2code.hairdresser.exception.IndentNotActiveException;
+import com.luv2code.hairdresser.exception.IndentStatusNotReservedException;
 import com.luv2code.hairdresser.exception.UserAlreadyHasReservedIndentException;
 import com.luv2code.hairdresser.repository.IndentRepository;
 import com.luv2code.hairdresser.service.impl.IndentServiceImpl;
-import org.junit.Assert;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -25,6 +24,11 @@ import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+
+import static com.luv2code.hairdresser.domain.enums.IndentType.FINISHED;
+import static com.luv2code.hairdresser.domain.enums.IndentType.RESERVED;
+import static com.luv2code.hairdresser.domain.enums.RoleType.USER;
+import static com.luv2code.hairdresser.domain.enums.StatusType.ACTIVE;
 
 @SpringBootTest
 public class IndentServiceImplTest {
@@ -49,14 +53,17 @@ public class IndentServiceImplTest {
     public void setup() {
         indentService = Mockito.spy(new IndentServiceImpl(indentRepository, calculationService));
 
-        Role role = new Role();
-        role.setId(1L);
-        role.setName("USER");
-        role.setDescription("User role");
+        final Role userRole = new Role();
+        userRole.setId(1L);
+        userRole.setName(USER);
+        userRole.setDescription("The user manager can perform CRUD operations over his/her profile and indents.");
+
+        final List<Role> roles = new ArrayList<>();
+        roles.add(userRole);
 
         firstUser = new User();
         firstUser.setId(1L);
-        firstUser.setRole(role);
+        firstUser.setRoles(roles);
         firstUser.setFirstName("Michael");
         firstUser.setLastName("Jordan");
         firstUser.setUsername("MJ");
@@ -64,12 +71,12 @@ public class IndentServiceImplTest {
         firstUser.setEmail("mj23@gmail.com");
         firstUser.setPhoneNumber("+385914541239");
         firstUser.setNumberOfReservations(1);
-        firstUser.setIsActive(true);
+        firstUser.setStatus(ACTIVE);
         firstUser.setHasReservedIndent(false);
 
         secondUser = new User();
         secondUser.setId(2L);
-        secondUser.setRole(role);
+        secondUser.setRoles(roles);
         secondUser.setFirstName("Lebron");
         secondUser.setLastName("James");
         secondUser.setUsername("LBJ");
@@ -77,13 +84,13 @@ public class IndentServiceImplTest {
         secondUser.setEmail("lebron.james23@gmail.com");
         secondUser.setPhoneNumber("+385984771631");
         secondUser.setNumberOfReservations(0);
-        secondUser.setIsActive(true);
+        firstUser.setStatus(ACTIVE);
         secondUser.setHasReservedIndent(true);
 
         List<User> users = new ArrayList<>();
         users.add(firstUser);
         users.add(secondUser);
-        role.setUsers(users);
+        userRole.setUsers(users);
 
         Accommodation firstAccommodation = new Accommodation();
         firstAccommodation.setId(1L);
@@ -103,7 +110,7 @@ public class IndentServiceImplTest {
         firstIndent.setId(1L);
         firstIndent.setReservationDate(LocalDate.of(2020, 11, 28));
         firstIndent.setReservationTimeFrom(parseToTime("11:10"));
-        firstIndent.setIsActive(false);
+        firstIndent.setStatus(RESERVED);
         firstIndent.setAccommodations(Collections.singletonList(firstAccommodation));
 
         secondIndent = new Indent();
@@ -111,7 +118,7 @@ public class IndentServiceImplTest {
         secondIndent.setReservationDate(LocalDate.of(2020, 11, 28));
         secondIndent.setReservationTimeFrom(parseToTime("13:10"));
         secondIndent.setReservationTimeTo(parseToTime("13:40"));
-        secondIndent.setIsActive(true);
+        secondIndent.setStatus(FINISHED);
         secondIndent.setUser(secondUser);
         secondIndent.setAccommodations(Collections.singletonList(secondAccommodation));
 
@@ -120,7 +127,7 @@ public class IndentServiceImplTest {
         thirdIndent.setReservationDate(LocalDate.of(2020, 11, 28));
         thirdIndent.setReservationTimeFrom(parseToTime("13:40"));
         thirdIndent.setReservationTimeTo(parseToTime("13:55"));
-        thirdIndent.setIsActive(true);
+        thirdIndent.setStatus(FINISHED);
         thirdIndent.setUser(firstUser);
         thirdIndent.setAccommodations(Collections.singletonList(firstAccommodation));
 
@@ -145,7 +152,7 @@ public class IndentServiceImplTest {
     }
 
     @Test
-    public void should_Save_When_User_Not_Have_Reserved_Indent() {
+    public void should_Save_When_Not_Have_Reserved_More_Then_One() {
         final Indent newIndent = indentService.save(firstUser, firstIndent);
 
         Assertions.assertNotNull(newIndent);
@@ -153,30 +160,30 @@ public class IndentServiceImplTest {
         Assertions.assertEquals("11:25", String.valueOf(newIndent.getReservationTimeTo()));
         Assertions.assertEquals("MJ", firstIndent.getUser().getUsername());
         Assertions.assertEquals("2", String.valueOf(firstUser.getNumberOfReservations()));
-        Assertions.assertTrue(newIndent.getIsActive());
+        Assertions.assertEquals("RESERVED", String.valueOf(newIndent.getStatus()));
         Assertions.assertTrue(newIndent.getUser().getHasReservedIndent());
     }
 
     @Test
-    public void should_Thrown_UserAlreadyHasReservedIndentException_When_User_Want_Reserved_Another_Indent() {
+    public void should_Throw_Exception_When_Have_Reserved_More_Then_One_Save() {
         Mockito.when(indentRepository.save(secondIndent))
                 .thenThrow(new UserAlreadyHasReservedIndentException(
                         "User",
-                        "hasReservedIndent",
-                        String.valueOf(secondUser.getHasReservedIndent())));
+                        "id",
+                        String.valueOf(secondUser.getId())));
 
-        final Exception exception = Assert.assertThrows(
+        final Exception exception = Assertions.assertThrows(
                 UserAlreadyHasReservedIndentException.class,
                 () -> indentService.save(secondUser, secondIndent));
 
-        final String expectedMessage = "Entity 'User' with 'hasReservedIndent' value 'true' already has an reserved indent.";
+        final String expectedMessage = "Entity 'User' with 'id' value '2' already has a reserved indent.";
         final String actualMessage = exception.getMessage();
 
         Assertions.assertTrue(actualMessage.contains(expectedMessage));
     }
 
     @Test
-    public void should_Return_Indent_When_Id_Is_Founded() {
+    public void should_Return_When_Id_Is_Founded() {
         final Indent searchedIndent = indentService.findById(secondIndent.getId());
 
         Assertions.assertNotNull(searchedIndent);
@@ -184,14 +191,14 @@ public class IndentServiceImplTest {
     }
 
     @Test
-    public void should_Thrown_EntityNotFoundException_When_Id_Is_Not_Founded() {
+    public void should_Throw_Exception_When_Id_Is_Not_Founded() {
         Mockito.when(indentRepository.findById(thirdIndent.getId()))
                 .thenThrow(new EntityNotFoundException(
                         "Indent",
                         "id",
                         String.valueOf(thirdIndent.getId())));
 
-        final Exception exception = Assert.assertThrows(
+        final Exception exception = Assertions.assertThrows(
                 EntityNotFoundException.class,
                 () -> indentService.findById(thirdIndent.getId()));
 
@@ -202,7 +209,7 @@ public class IndentServiceImplTest {
     }
 
     @Test
-    public void should_Return_All_Indents() {
+    public void should_Return_All() {
         final List<Indent> searchedIndents = indentService.findAll();
 
         Assertions.assertNotNull(searchedIndents);
@@ -210,7 +217,7 @@ public class IndentServiceImplTest {
     }
 
     @Test
-    public void should_Return_All_Indents_For_Given_Chosen_Date() {
+    public void should_Return_All_For_Given_Chosen_Date() {
         final List<Indent> searchedIndents = indentService.findAllForChosenDate(parseToDate("2020-11-28"));
 
         Assertions.assertNotNull(searchedIndents);
@@ -218,15 +225,15 @@ public class IndentServiceImplTest {
     }
 
     @Test
-    public void should_Return_All_Indents_For_User_With_Given_Username() {
-        final List<Indent> searchedIndents = indentService.findAllForUser(secondUser.getUsername());
+    public void should_Return_All_For_Given_Username() {
+        final List<Indent> searchedIndents = indentService.findAllForUser(secondUser);
 
         Assertions.assertNotNull(searchedIndents);
         Assertions.assertEquals(1, searchedIndents.size());
     }
 
     @Test
-    public void should_Delete_Indent_Successfully() {
+    public void should_Delete_When_Not_Have_Reserved_More_Then_One() {
         indentService.delete(firstUser, thirdIndent);
 
         Mockito.verify(indentRepository, Mockito.times(1)).delete(thirdIndent);
@@ -236,9 +243,19 @@ public class IndentServiceImplTest {
     }
 
     @Test
-    public void should_Delete_Indent_Successfaully() {
-        Mockito.doThrow(new IndentNotActiveException("Indent", "id", String.valueOf(secondIndent.getId())))
+    public void should_Throw_Exception_When_Have_Reserved_More_Then_One_Delete() {
+        Mockito.doThrow(new IndentStatusNotReservedException(
+                "Indent", "id", String.valueOf(secondIndent.getId())))
                 .when(indentService).delete(secondUser, secondIndent);
+
+        final Exception exception = Assertions.assertThrows(
+                IndentStatusNotReservedException.class,
+                () -> indentService.delete(secondUser, secondIndent));
+
+        final String expectedMessage = "Entity 'Indent' with 'id' value '2' has not reserved status so the requested action cannot be performed.";
+        final String actualMessage = exception.getMessage();
+
+        Assertions.assertTrue(actualMessage.contains(expectedMessage));
     }
 
     private static LocalTime parseToTime(String time) {
