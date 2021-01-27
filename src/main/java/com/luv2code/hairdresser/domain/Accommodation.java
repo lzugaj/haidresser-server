@@ -1,6 +1,7 @@
 package com.luv2code.hairdresser.domain;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.luv2code.hairdresser.domain.base.BaseEntity;
 import lombok.*;
 
@@ -31,14 +32,13 @@ public class Accommodation extends BaseEntity {
 
     @JsonBackReference
     @ManyToMany
-    @JoinTable(
-            name = "INDENT_ACCOMMODATION",
-            joinColumns = {
-                    @JoinColumn(name = "accommodation_id")
-            },
-            inverseJoinColumns = {
-                    @JoinColumn(name = "indent_id")
-            })
+    @JoinTable(name = "INDENT_ACCOMMODATION",
+            joinColumns = @JoinColumn(name = "accommodation_id"),
+            inverseJoinColumns = @JoinColumn(name = "indent_id"))
     private List<Indent> indents;
+
+    @JsonManagedReference
+    @ManyToMany(mappedBy = "accommodations")
+    private List<Salon> salons;
 
 }
