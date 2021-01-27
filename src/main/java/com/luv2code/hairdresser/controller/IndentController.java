@@ -13,7 +13,7 @@ import java.sql.Date;
 import java.util.List;
 
 @RestController
-@RequestMapping("/indent")
+@RequestMapping("/indents")
 public class IndentController {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(IndentController.class);
@@ -44,22 +44,6 @@ public class IndentController {
         final List<Indent> indents = indentService.findAllForChosenDate(parseDate(chosenDate));
         LOGGER.info("Successfully founded all Indents for chosen date: ´{}´.", chosenDate);
         return new ResponseEntity<>(indents, HttpStatus.OK);
-    }
-
-//    @GetMapping("/user/{username}")
-//    public ResponseEntity<List<?>> findAllForUser(@PathVariable final String username) {
-//        final List<Indent> indents = indentService.findAllForUser(username);
-//        LOGGER.info("Successfully founded all Indents for User with username: ´{}´.", username);
-//        return new ResponseEntity<>(indents, HttpStatus.OK);
-//    }
-
-    @DeleteMapping("/{id}")
-    public ResponseEntity<?> delete(@PathVariable final Long id) {
-        // TODO: @lzugaj - get current login user
-
-        final Indent searchedIndent = indentService.findById(id);
-        LOGGER.info("Successfully founded Indent with id: ´{}´.", id);
-        return null;
     }
 
     private Date parseDate(final String chosenDateString) {
