@@ -90,7 +90,7 @@ public class IndentServiceImplTest {
         List<User> users = new ArrayList<>();
         users.add(firstUser);
         users.add(secondUser);
-        userRole.setUsers(users);
+//        userRole.setUsers(users);
 
         Accommodation firstAccommodation = new Accommodation();
         firstAccommodation.setId(1L);

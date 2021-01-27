@@ -59,7 +59,7 @@ class AvailableTermServiceImplTest {
         user.setRoles(roles);
 
         users.add(user);
-        role.setUsers(users);
+//        role.set(users);
 
         firstAccommodation = new Accommodation();
         firstAccommodation.setId(1L);

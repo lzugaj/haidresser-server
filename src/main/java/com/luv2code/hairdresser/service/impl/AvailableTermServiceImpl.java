@@ -37,22 +37,17 @@ public class AvailableTermServiceImpl implements AvailableTermService {
 
         final List<Time> searchedAvailableTerms = new ArrayList<>();
         final List<Indent> indents = indentService.findAllForChosenDate(chosenDate);
-        LOGGER.info("Successfully founded all Indents for chosen date: ´{}´.", chosenDate);
+        LOGGER.info("Successfully founded ´{}´ Indents for chosen date: ´{}´.", indents.size(), chosenDate);
 
         final Integer timeRequiredToPerformChosenAccommodations = getTotalDurationForChosenAccommodations(chosenUserAccommodations);
-        LOGGER.info("Time required to perform chosen accommodations is: ´{}´.", timeRequiredToPerformChosenAccommodations);
+        LOGGER.info("Time required to perform chosen Accommodations is: ´{}´.", timeRequiredToPerformChosenAccommodations);
 
         findAllTermsBeforeFirstTermThatDay(indents, searchedAvailableTerms, timeRequiredToPerformChosenAccommodations);
-        LOGGER.info("Successfully founded all terms before first term that day.");
 
         for (int i = 0; i < indents.size(); i++) {
             if (indents.size() > (i + 1)) {
                 Time currentDate = Time.valueOf(indents.get(i).getReservationTimeTo());
-                LOGGER.info("Current Indent reservation time to is: ´{}´.", currentDate);
-
                 Time nextDate = Time.valueOf(indents.get(i + 1).getReservationTimeTo());
-                LOGGER.info("Next Indent reservation time to is: ´{}´.", nextDate);
-
                 searchAvailableTerms(currentDate, nextDate, searchedAvailableTerms, timeRequiredToPerformChosenAccommodations);
             } else {
                 searchedAvailableTerms.add(Time.valueOf(indents.get(i).getReservationTimeTo()));
@@ -60,8 +55,8 @@ public class AvailableTermServiceImpl implements AvailableTermService {
         }
 
         findAllTermsAfterLastTermThatDay(searchedAvailableTerms, timeRequiredToPerformChosenAccommodations);
-        LOGGER.info("Successfully founded all terms after last term that day.");
-        LOGGER.info("Founded ´{}´ available terms on chosen date: ´{}´.", searchedAvailableTerms.size(), chosenDate);
+
+        LOGGER.info("Successfully founded ´{}´ available terms on chosen date: ´{}´.", searchedAvailableTerms.size(), chosenDate);
         return parseToLocalTime(searchedAvailableTerms);
     }
 
@@ -75,34 +70,22 @@ public class AvailableTermServiceImpl implements AvailableTermService {
     }
 
     private void findAllTermsBeforeFirstTermThatDay(final List<Indent> indents, final List<Time> searchedAvailableTerms, final Integer timeRequiredToPerformChosenAccommodations) {
-        LOGGER.info("Finding all terms before first term that day.");
-
-        final Time firstIndentReservationTimeToDate = Time.valueOf(indents.get(0).getReservationTimeFrom());
-        LOGGER.info("First Indent reservation time to is: ´{}´.", firstIndentReservationTimeToDate);
-
-        Time firstAvailableReservationTimeToOnWorkingDay = Time.valueOf(WORKING_FROM);
-        LOGGER.info("First available reservation time to on working day is: ´{}´.", firstAvailableReservationTimeToOnWorkingDay);
-
-        searchAvailableTerms(firstAvailableReservationTimeToOnWorkingDay, firstIndentReservationTimeToDate, searchedAvailableTerms, timeRequiredToPerformChosenAccommodations);
+        LOGGER.info("Start finding all terms before first term that day.");
+        final Time firstIndentReservationTimeTo = Time.valueOf(indents.get(0).getReservationTimeFrom());
+        final Time firstAvailableReservationTimeToOnWorkingDay = Time.valueOf(WORKING_FROM);
+        searchAvailableTerms(firstAvailableReservationTimeToOnWorkingDay, firstIndentReservationTimeTo, searchedAvailableTerms, timeRequiredToPerformChosenAccommodations);
     }
 
     private void findAllTermsAfterLastTermThatDay(final List<Time> searchedAvailableTerms, final Integer timeRequiredToPerformChosenAccommodations) {
-        LOGGER.info("Finding all terms after last term that day.");
-
-        Time lastIndentReservationTimeToDate = searchedAvailableTerms.get(searchedAvailableTerms.size() - 1);
-        LOGGER.info("Last Indent reservation time to is: ´{}´.", lastIndentReservationTimeToDate);
-
+        LOGGER.info("Start finding all terms after last term that day.");
+        final Time lastIndentReservationTimeTo = searchedAvailableTerms.get(searchedAvailableTerms.size() - 1);
         final Time lastAvailableReservationTimeToOnWorkingDayString = Time.valueOf(WORKING_TO);
-        LOGGER.info("Last available reservation time to on working day is: ´{}´.", lastAvailableReservationTimeToOnWorkingDayString);
-
-        searchAvailableTerms(lastIndentReservationTimeToDate, lastAvailableReservationTimeToOnWorkingDayString, searchedAvailableTerms, timeRequiredToPerformChosenAccommodations);
+        searchAvailableTerms(lastIndentReservationTimeTo, lastAvailableReservationTimeToOnWorkingDayString, searchedAvailableTerms, timeRequiredToPerformChosenAccommodations);;
     }
 
     private void searchAvailableTerms(Time availableReservationTimeTo, final Time reservationTimeTo, final List<Time> searchedAvailableTerms, final Integer timeRequiredToPerformChosenAccommodations) {
         for (Time i = availableReservationTimeTo; i.before(reservationTimeTo); calculateNextDateTerm(i, 5)) {
             final Time calculatedNextDateTerm = calculateNextDateTerm(availableReservationTimeTo, timeRequiredToPerformChosenAccommodations);
-            LOGGER.info("Successfully calculated next date term is: ´{}´.", calculatedNextDateTerm);
-
             if (!calculatedNextDateTerm.after(reservationTimeTo)) {
                 String currentIteratedDateString = String.valueOf(i);
                 searchedAvailableTerms.add(Time.valueOf(currentIteratedDateString));

@@ -20,16 +20,16 @@ import java.util.List;
 @Table(name = "INDENT")
 public class Indent extends BaseEntity {
 
-    @Column(name = "reservation_date")
+    @Column(name = "reserved_on")
     private LocalDate reservationDate;
 
-    @Column(name = "reservation_time_from")
+    @Column(name = "reserved_from")
     private LocalTime reservationTimeFrom;
 
-    @Column(name = "reservation_time_to")
+    @Column(name = "reserved_to")
     private LocalTime reservationTimeTo;
 
-    @Column(name = "is_active")
+    @Column(name = "status")
     @Enumerated(EnumType.STRING)
     private IndentType status;
 
@@ -37,6 +37,16 @@ public class Indent extends BaseEntity {
     @JsonManagedReference
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
+
+    @ManyToOne
+    @JsonManagedReference
+    @JoinColumn(name = "employer_id", nullable = false)
+    private Employer employer;
+
+    @ManyToOne
+    @JsonManagedReference
+    @JoinColumn(name = "salon_id", nullable = false)
+    private Salon salon;
 
     @JsonManagedReference
     @ManyToMany(mappedBy = "indents")
