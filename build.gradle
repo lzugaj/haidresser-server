@@ -27,6 +27,9 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-mail'
     implementation 'org.springframework.boot:spring-boot-starter-quartz'
 
+    // Compile
+    compile 'org.mapstruct:mapstruct:1.4.1.Final'
+
     // Compile only
     compileOnly 'org.projectlombok:lombok'
 
@@ -40,6 +43,7 @@ dependencies {
     // Annotation processor
     annotationProcessor "org.springframework.boot:spring-boot-configuration-processor"
     annotationProcessor 'org.projectlombok:lombok'
+    annotationProcessor 'org.mapstruct:mapstruct-processor:1.4.1.Final'
 
     // Test compile
     testRuntime('org.junit.jupiter:junit-jupiter-engine:5.2.0')
@@ -49,7 +53,9 @@ dependencies {
     testCompile('org.springframework.boot:spring-boot-starter-test')
 
     // Test implementation
-    testImplementation('org.junit.jupiter:junit-jupiter-api:5.2.0')
+    testImplementation('org.junit.jupiter:junit-jupiter-api:5.2.0') {
+        exclude group: 'org.junit.vintage', module: 'junit-vintage-engine'
+    }
 }
 
 test {
